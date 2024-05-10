@@ -43,20 +43,6 @@ resource "aws_eip" "eip-address" {
   }
 }
 
-#create NGW#
-
-resource "aws_nat_gateway" "nat-gateway" {
-  allocation_id = aws_eip.eip-address.id
-  subnet_id     = aws_subnet.private-subnet.id
-
-  tags = {
-    owner = var.owner
-    Name = var.nat-gw-name
-  }
-
-  depends_on = [aws_internet_gateway.igw]
-}
-
 #public subnet#
 
 resource "aws_subnet" "public-subnet" {
@@ -68,20 +54,6 @@ resource "aws_subnet" "public-subnet" {
   tags = {
     owner = var.owner
     Name  = var.public-subnet-name
-  }
-}
-
-#private subnet#
-
-resource "aws_subnet" "private-subnet" {
-  vpc_id            = aws_vpc.vpc_name.id
-  cidr_block        = var.private-subnet-cidr
-  availability_zone = var.az
-  #   map_public_ip_on_launch = true
-
-  tags = {
-    owner = var.owner
-    Name  = var.private-subnet-name
   }
 }
 
@@ -103,25 +75,4 @@ resource "aws_route_table" "public-rt" {
 resource "aws_route_table_association" "public-rt-association" {
   subnet_id      = aws_subnet.public-subnet.id
   route_table_id = aws_route_table.public-rt.id
-}
-
-#private route table#
-
-resource "aws_route_table" "private-rt" {
-  vpc_id = aws_vpc.vpc_name.id
-
-  route {
-    cidr_block = "0.0.0.0/0"
-    gateway_id = aws_nat_gateway.nat-gateway.id
-  }
-
-  tags = {
-    owner = var.owner
-    Name  = "sjh-private-rt-name"
-  }
-}
-
-resource "aws_route_table_association" "private-rt-association" {
-  subnet_id      = aws_subnet.private-subnet.id
-  route_table_id = aws_route_table.private-rt.id
 }
